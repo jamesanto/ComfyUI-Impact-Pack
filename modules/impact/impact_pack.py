@@ -2728,13 +2728,13 @@ class StringSelector:
         return (selected, )
 
 
-from impact.logics import AnyType
+from impact.utils import any_typ
 
 class ImpactLogger:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                        "data": (AnyType("*"), ""),
+                        "data": (any_typ, ""),
                     },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
                 }
@@ -2773,7 +2773,7 @@ class ImpactDummyInput:
 
     CATEGORY = "ImpactPack/Debug"
 
-    RETURN_TYPES = (AnyType("*"),)
+    RETURN_TYPES = (any_typ,)
     FUNCTION = "doit"
 
     def doit(self):

@@ -191,30 +191,80 @@ app.registerExtension({
 			impactProgressBadge.addStatusHandler(nodeType);
 		}
 
-        if (nodeData.name === 'ImpactMakeImageList' || nodeData.name === 'LatentSwitch' || nodeData.name == 'SEGSSwitch') {
+        if (nodeData.name === 'ImpactMakeImageList' || nodeData.name === 'ImpactSwitch' || nodeData.name === 'LatentSwitch' || nodeData.name == 'SEGSSwitch') {
             var input_name = "input";
-            var input_type = "*";
 
             switch(nodeData.name) {
             case 'ImpactMakeImageList':
                 input_name = "image";
-                input_type = "IMAGE";
                 break;
 
             case 'LatentSwitch':
-                input_name = "latent";
-                input_type = "LATENT";
+                input_name = "input";
                 break;
 
             case 'SEGSSwitch':
-                input_name = "segs";
-                input_type = "SEGS";
+                input_name = "input";
                 break;
+
+            case 'ImpactSwitch':
+                input_name = "input";
             }
 
             const onConnectionsChange = nodeType.prototype.onConnectionsChange
             nodeType.prototype.onConnectionsChange = function (type, index, connected, link_info) {
+                if(!link_info)
+                    return;
+
+                if(type == 2) {
+                    // connect output
+                    if(connected){
+                        if(this.outputs[0].type == '*'){
+                            if(link_info.type == '*') {
+                                this.disconnectOutput(link_info.origin_slot);
+                            }
+                            else {
+                                // propagate type
+                                this.outputs[0].type = link_info.type;
+                                this.outputs[0].label = link_info.type;
+                                this.outputs[0].name = link_info.type;
+
+                                for(let i in this.inputs) {
+                                    this.inputs[i].type = link_info.type;
+                                }
+                            }
+                        }
+                    }
+
+                    return;
+                }
+                else {
+                    // connect input
+                    if(this.inputs[0].type == '*'){
+                        const node = app.graph.getNodeById(link_info.origin_id);
+                        let origin_type = node.outputs[link_info.origin_slot].type;
+
+                        if(origin_type == '*') {
+                            this.disconnectInput(link_info.target_slot);
+                            return;
+                        }
+
+                        for(let i in this.inputs) {
+                            this.inputs[i].type = origin_type;
+                        }
+
+                        this.outputs[0].type = origin_type;
+                        this.outputs[0].label = origin_type;
+                        this.outputs[0].name = origin_type;
+                    }
+                }
+
                 if (!connected && this.inputs.length > 1) {
+                    const stackTrace = new Error().stack;
+                    if(stackTrace.includes('LGraphNode.connect')) {
+                        return; // replace connection: don't remove connection
+                    }
+
                     if (this.widgets) {
                         const w = this.widgets.find((w) => w.name === this.inputs[index].name)
                         if (w) {
@@ -231,11 +281,15 @@ app.registerExtension({
                 }
 
                 if (this.inputs[this.inputs.length - 1].link != undefined) {
-                    this.addInput(`${input_name}${this.inputs.length + 1}`, input_type);
+                    this.addInput(`${input_name}${this.inputs.length + 1}`, this.inputs[0].type);
                 }
 
-                this.widgets[0].options.max = this.inputs.length;
-                this.widgets[0].value = Math.min(this.widgets[0].value, this.widgets[0].options.max);
+                if(this.widgets) {
+                    this.widgets[0].options.max = this.inputs.length-1;
+                    this.widgets[0].value = Math.min(this.widgets[0].value, this.widgets[0].options.max);
+                    if(this.widgets[0].options.max > 0 && this.widgets[0].value == 0)
+                        this.widgets[0].value = 1;
+                }
             }
         }
 	},
