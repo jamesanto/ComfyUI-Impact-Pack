@@ -191,7 +191,27 @@ app.registerExtension({
 			impactProgressBadge.addStatusHandler(nodeType);
 		}
 
-        if (nodeData.name === 'ImpactMakeImageList') {
+        if (nodeData.name === 'ImpactMakeImageList' || nodeData.name === 'LatentSwitch' || nodeData.name == 'SEGSSwitch') {
+            var input_name = "input";
+            var input_type = "*";
+
+            switch(nodeData.name) {
+            case 'ImpactMakeImageList':
+                input_name = "image";
+                input_type = "IMAGE";
+                break;
+
+            case 'LatentSwitch':
+                input_name = "latent";
+                input_type = "LATENT";
+                break;
+
+            case 'SEGSSwitch':
+                input_name = "segs";
+                input_type = "SEGS";
+                break;
+            }
+
             const onConnectionsChange = nodeType.prototype.onConnectionsChange
             nodeType.prototype.onConnectionsChange = function (type, index, connected, link_info) {
                 if (!connected && this.inputs.length > 1) {
@@ -206,13 +226,16 @@ app.registerExtension({
                 }
 
                 for (let i = 0; i < this.inputs.length; i++) {
-                    this.inputs[i].label = `image${i + 1}`
-                    this.inputs[i].name = `image${i + 1}`
+                    this.inputs[i].label = `${input_name}${i + 1}`
+                    this.inputs[i].name = `${input_name}${i + 1}`
                 }
 
                 if (this.inputs[this.inputs.length - 1].link != undefined) {
-                    this.addInput(`image${this.inputs.length + 1}`, 'IMAGE');
+                    this.addInput(`${input_name}${this.inputs.length + 1}`, input_type);
                 }
+
+                this.widgets[0].options.max = this.inputs.length;
+                this.widgets[0].value = Math.min(this.widgets[0].value, this.widgets[0].options.max);
             }
         }
 	},

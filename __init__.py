@@ -196,9 +196,6 @@ NODE_CLASS_MAPPINGS = {
     "ImpactSEGSToMaskList": SEGSToMaskList,
     "ImpactSEGSConcat": SEGSConcat,
 
-    # "SEGPick": SEGPick,
-    # "SEGEdit": SEGEdit,
-
     "ImpactKSamplerBasicPipe": KSamplerBasicPipe,
     "ImpactKSamplerAdvancedBasicPipe": KSamplerAdvancedBasicPipe,
 
